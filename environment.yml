@@ -35,4 +35,5 @@ dependencies:
   - pip:
     #- python-dotenv
     - mkdocs
-    - Corrfunc 
+    - Corrfunc
+    - memory_profiler
