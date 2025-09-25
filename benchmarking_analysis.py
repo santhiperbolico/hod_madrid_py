@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 from memory_profiler import memory_usage
 import time
 
@@ -39,11 +40,12 @@ class BenchStats:
     runtime_s: float
     samples: int
     approx_interval_s: float
-    peak_mem_mb: float
-    avg_mem_mb: float
-    start_mem_mb: float
-    end_mem_mb: float
-    delta_mem_mb: float
+    interpreter_mem_mib: float
+    peak_mem_mib: float
+    avg_mem_mib: float
+    start_mem_mib: float
+    end_mem_mib: float
+    delta_mem_mib: float
 
     def asdict(self) -> dict[str, str | float]:
         return {
@@ -51,11 +53,12 @@ class BenchStats:
             "runtime_s": round(self.runtime_s, 6),
             "samples": self.samples,
             "approx_interval_s": round(self.approx_interval_s, 6),
-            "peak_mem_mb": round(self.peak_mem_mb, 3),
-            "avg_mem_mb": round(self.avg_mem_mb, 3),
-            "start_mem_mb": round(self.start_mem_mb, 3),
-            "end_mem_mb": round(self.end_mem_mb, 3),
-            "delta_mem_mb": round(self.delta_mem_mb, 3)
+            "interpreter_mem_mib": self.interpreter_mem_mib,
+            "peak_mem_mib": round(self.peak_mem_mib, 3),
+            "avg_mem_mib": round(self.avg_mem_mib, 3),
+            "start_mem_mib": round(self.start_mem_mib, 3),
+            "end_mem_mib": round(self.end_mem_mib, 3),
+            "delta_mem_mib": round(self.delta_mem_mib, 3)
         }
 
     def to_json(self, filepath: str) -> str:
@@ -100,7 +103,8 @@ def benchmarking_analysis(
         Diccionario con estadísticas clave y, si aplica, rutas a CSV/PNG.
     """
     start_perf = time.perf_counter()
-    (series, _retval) = memory_usage(
+    interpreter_mem_mib = memory_usage(max_usage=True)
+    series, _ = memory_usage(
         (func, args, kwargs),
         interval=interval,
         timeout=None,
@@ -117,33 +121,33 @@ def benchmarking_analysis(
     if not series:
         raise RuntimeError("No se obtuvo ninguna muestra de memoria.")
 
-    t0 = series[0][0]
-    times_s = [t - t0 for (t, _m) in series]
-    mems_mb = [m for (_t, m) in series]
+    times_s = list(np.linspace(0, end_perf-start_perf, len(series)))
+    mems_mb = [m for (m, _s) in series]
 
     samples = len(mems_mb)
     approx_interval_s = (times_s[-1] / (samples - 1)) if samples > 1 else interval
-    peak_mem_mb = max(mems_mb)
-    avg_mem_mb = sum(mems_mb) / samples
-    start_mem_mb = mems_mb[0]
-    end_mem_mb = mems_mb[-1]
-    delta_mem_mb = peak_mem_mb - start_mem_mb
+    peak_mem_mib = max(mems_mb)
+    avg_mem_mib = sum(mems_mb) / samples
+    start_mem_mib = mems_mb[0]
+    end_mem_mib = mems_mb[-1]
+    delta_mem_mib = peak_mem_mib - interpreter_mem_mib
 
     func_name = getattr(func, "__name__", "callable")
     path = Path(os.path.join(output_path,f"{func_name}_timeserie.csv"))
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as file:
-        file.write("t_s,mem_mb\n")
+        file.write("t_s,mem_mib, interpreter_mem_mib\n")
         for t, m in zip(times_s, mems_mb):
-            file.write(f"{t:.6f},{m:.6f}\n")
+            file.write(f"{t:.6f},{m:.6f},{interpreter_mem_mib:.6f}\n")
 
     path = Path(os.path.join(output_path,f"{func_name}_timeserie.png"))
     path.parent.mkdir(parents=True, exist_ok=True)
     plt.figure()
-    plt.plot(times_s, mems_mb)
+    mem_array = np.array(mems_mb) - interpreter_mem_mib
+    plt.plot(times_s, mem_array)
     plt.xlabel("Time (s)")
-    plt.ylabel("Memory (MiB)")
-    plt.title(f"Memory Use: {func.__name__}")
+    plt.ylabel("Memory (MiB) - Interpreter Memory (MiB)")
+    plt.title(f"Process Memory Used: {func.__name__}")
     plt.tight_layout()
     plt.savefig(path, dpi=150)
     plt.close()
@@ -152,12 +156,13 @@ def benchmarking_analysis(
         func_name=getattr(func, "__name__", "callable"),
         runtime_s=end_perf - start_perf,
         samples=samples,
-        approx_interval_s=approx_interval_s,
-        peak_mem_mb=peak_mem_mb,
-        avg_mem_mb=avg_mem_mb,
-        start_mem_mb=start_mem_mb,
-        end_mem_mb=end_mem_mb,
-        delta_mem_mb=delta_mem_mb
+        approx_interval_s=float(approx_interval_s),
+        interpreter_mem_mib=interpreter_mem_mib,
+        peak_mem_mib=peak_mem_mib,
+        avg_mem_mib=avg_mem_mib,
+        start_mem_mib=start_mem_mib,
+        end_mem_mib=end_mem_mib,
+        delta_mem_mib=delta_mem_mib
     )
 
     stats.to_json(os.path.join(output_path,f"{func_name}_stats.json"))
