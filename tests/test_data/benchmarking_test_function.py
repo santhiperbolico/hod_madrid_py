@@ -4,8 +4,19 @@ from numba import njit
 
 def mandelbrot(c: complex, n: int = 1000) -> int:
     """
-    Devuelve el número de iteraciones hasta que diverge,
-    o n si permanece estable.
+    Computes the Mandelbrot iteration count for a given complex number.
+
+    Parameters
+    ----------
+    c : complex
+        Complex number to evaluate.
+    n : int, default=1000
+        Maximum number of iterations.
+
+    Returns
+    -------
+    int
+        Number of iterations until divergence, or `n` if it remains bounded.
     """
     z = 0
     for i in range(n):
@@ -17,6 +28,22 @@ def mandelbrot(c: complex, n: int = 1000) -> int:
 
 @njit
 def mandelbrot_numba(c: complex, n: int = 1000) -> int:
+    """
+   Computes the Mandelbrot iteration count for a given complex number,
+   optimized with Numba JIT compilation.
+
+   Parameters
+   ----------
+   c : complex
+       Complex number to evaluate.
+   n : int, default=1000
+       Maximum number of iterations.
+
+   Returns
+   -------
+   int
+       Number of iterations until divergence, or `n` if it remains bounded.
+   """
     z = 0 + 0j
     for i in range(n):
         z = z * z + c
@@ -28,9 +55,26 @@ def mandelbrot_numba(c: complex, n: int = 1000) -> int:
 @njit
 def mandelbrot_grid_numba(xmin, xmax, ymin, ymax, width, height, n=1000):
     """
-    Calcula el conjunto de Mandelbrot en una rejilla.
+    Computes the Mandelbrot set on a 2D grid using Numba JIT compilation.
 
-    Retorna: array 2D con el número de iteraciones hasta divergencia.
+    Parameters
+    ----------
+    xmin, xmax : float
+        Range of the real axis.
+    ymin, ymax : float
+        Range of the imaginary axis.
+    width : int
+        Number of points along the x-axis.
+    height : int
+        Number of points along the y-axis.
+    n : int, default=1000
+        Maximum number of iterations.
+
+    Returns
+    -------
+    numpy.ndarray of shape (height, width), dtype=int32
+        2D array with the number of iterations until divergence
+        for each grid point.
     """
     result = np.zeros((height, width), dtype=np.int32)
     for i in range(height):
@@ -44,9 +88,26 @@ def mandelbrot_grid_numba(xmin, xmax, ymin, ymax, width, height, n=1000):
 
 def mandelbrot_grid(xmin, xmax, ymin, ymax, width, height, n=1000):
     """
-    Calcula el conjunto de Mandelbrot en una rejilla.
+    Computes the Mandelbrot set on a 2D grid.
 
-    Retorna: array 2D con el número de iteraciones hasta divergencia.
+    Parameters
+    ----------
+    xmin, xmax : float
+        Range of the real axis.
+    ymin, ymax : float
+        Range of the imaginary axis.
+    width : int
+        Number of points along the x-axis.
+    height : int
+        Number of points along the y-axis.
+    n : int, default=1000
+        Maximum number of iterations.
+
+    Returns
+    -------
+    numpy.ndarray of shape (height, width), dtype=int32
+        2D array with the number of iterations until divergence
+        for each grid point.
     """
     result = np.zeros((height, width), dtype=np.int32)
     for i in range(height):

@@ -17,17 +17,17 @@ from produce_hod_mock import main
 
 def get_params(argv: list[str]) -> argparse.Namespace:
     """
-    Función que genera los argumentos de download_data.
+    Function that generates the arguments for download_data.
 
     Parameters
     ----------
-    argv: list[str]
-        Lista de argumentos del job.
+    argv : list[str]
+        List of job arguments.
 
     Returns
     -------
-    args: argparse.Namespace
-        Argumentos.
+    args : argparse.Namespace
+        Parsed arguments.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", default="output/")
@@ -36,6 +36,42 @@ def get_params(argv: list[str]) -> argparse.Namespace:
 
 @dataclass
 class BenchStats:
+    """
+    Stores benchmark results of memory and runtime analysis for a process.
+
+    This class captures execution time, memory usage statistics, and provides
+    utilities to export the results as a dictionary or JSON file.
+
+    Attributes
+    ----------
+    func_name : str
+        Name of the function being analyzed.
+    runtime_s : float
+        Total runtime in seconds.
+    samples : int
+        Number of memory samples collected.
+    approx_interval_s : float
+        Approximate sampling interval in seconds.
+    interpreter_mem_mib : float
+        Baseline interpreter memory usage in MiB.
+    peak_mem_mib : float
+        Peak memory usage in MiB during execution.
+    avg_mem_mib : float
+        Average memory usage in MiB.
+    start_mem_mib : float
+        Memory usage at the start of execution in MiB.
+    end_mem_mib : float
+        Memory usage at the end of execution in MiB.
+    delta_mem_mib : float
+        Difference between end and start memory usage in MiB.
+
+    Methods
+    -------
+    asdict() -> dict[str, str | float]
+        Returns benchmark statistics as a dictionary with rounded values.
+    to_json(filepath: str) -> str
+        Saves benchmark statistics to a JSON file and returns the file path.
+    """
     func_name: str
     runtime_s: float
     samples: int
@@ -79,28 +115,28 @@ def benchmarking_analysis(
     **kwargs: Any,
 ) -> dict[str, str | float]:
     """
-    Analiza memoria y tiempo de ejecución de `func` usando memory-profiler y devuelve métricas.
-    Opcionalmente guarda la serie temporal en CSV y una gráfica PNG.
+    Analyzes memory usage and execution time of `func` using memory-profiler and returns metrics.
+    Optionally saves the time series to a CSV file and a PNG plot.
 
-    Parámetros
+    Parameters
     ----------
     func : Callable
-        Función a evaluar.
+        Function to evaluate.
     *args, **kwargs : Any
-        Argumentos de la función.
-    interval : float, por defecto 0.05
-        Periodo de muestreo en segundos para memory-profiler.
-    include_children : bool, por defecto True
-        Incluye procesos hijos en la medición.
+        Arguments to pass to the function.
+    interval : float, default 0.05
+        Sampling period in seconds for memory-profiler.
+    include_children : bool, default True
+        Whether to include child processes in the measurement.
     save_csv : str | None
-        Ruta donde guardar el CSV con columnas: t_s, mem_mb.
+        Path to save the CSV file with columns: t_s, mem_mb.
     save_plot : str | None
-        Ruta donde guardar la gráfica PNG (memoria vs tiempo).
+        Path to save the PNG plot (memory vs. time).
 
-    Retorna
+    Returns
     -------
     dict[str, str | float]
-        Diccionario con estadísticas clave y, si aplica, rutas a CSV/PNG.
+        Dictionary with key statistics and, if applicable, paths to CSV/PNG files.
     """
     start_perf = time.perf_counter()
     interpreter_mem_mib = memory_usage(max_usage=True)
@@ -119,7 +155,7 @@ def benchmarking_analysis(
     end_perf = time.perf_counter()
 
     if not series:
-        raise RuntimeError("No se obtuvo ninguna muestra de memoria.")
+        raise RuntimeError("No memory sample was obtained.")
 
     times_s = list(np.linspace(0, end_perf-start_perf, len(series)))
     mems_mb = [m for (m, _s) in series]
