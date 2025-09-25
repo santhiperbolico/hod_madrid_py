@@ -22,3 +22,5 @@ def test_benchmarking_analysis():
     assert isinstance(result, dict)
     assert isinstance(result_numba, dict)
     assert result["runtime_s"] > result_numba["runtime_s"]
+    assert result["peak_mem_mib"] > result["interpreter_mem_mib"]
+    assert result_numba["peak_mem_mib"] > result_numba["interpreter_mem_mib"]
