@@ -13,7 +13,6 @@ def test_benchmarking_analysis():
             xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, width=width, height=height,
             output_path=tmpdir,
         )
-
         result_numba = benchmarking_analysis(
             mandelbrot_grid_numba,
             xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, width=width, height=height,

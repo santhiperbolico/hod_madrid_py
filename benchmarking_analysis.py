@@ -2,16 +2,16 @@ import sys
 import argparse
 import logging
 import os
+import json
 from typing import Any, Callable
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from pathlib import Path
 
-from produce_hod_mock import main
-
 from memory_profiler import memory_usage
 import time
-import importlib
+
+from produce_hod_mock import main
 
 
 def get_params(argv: list[str]) -> argparse.Namespace:
@@ -29,9 +29,7 @@ def get_params(argv: list[str]) -> argparse.Namespace:
         Argumentos.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--package")
-    parser.add_argument("--function")
-    parser.add_argument("--path")
+    parser.add_argument("--path", default="output/")
     return parser.parse_args(argv)
 
 
@@ -59,6 +57,14 @@ class BenchStats:
             "end_mem_mb": round(self.end_mem_mb, 3),
             "delta_mem_mb": round(self.delta_mem_mb, 3)
         }
+
+    def to_json(self, filepath: str) -> str:
+        dic_stats = self.asdict()
+        json_stats = json.dumps(dic_stats)
+        with open(filepath, "w") as jsonfile:
+            jsonfile.write(json_stats)
+        return filepath
+
 
 
 def benchmarking_analysis(
@@ -93,9 +99,6 @@ def benchmarking_analysis(
     dict[str, str | float]
         Diccionario con estadísticas clave y, si aplica, rutas a CSV/PNG.
     """
-    # Ejecuta la función dentro de memory_usage para capturar serie temporal.
-    # timestamps=True => lista de (timestamp_epoch, mem_mb)
-    # retval=True => devuelve (serie, retorno_func)
     start_perf = time.perf_counter()
     (series, _retval) = memory_usage(
         (func, args, kwargs),
@@ -127,14 +130,14 @@ def benchmarking_analysis(
     delta_mem_mb = peak_mem_mb - start_mem_mb
 
     func_name = getattr(func, "__name__", "callable")
-    path = Path(os.path.join(output_path,f"{func_name}.csv"))
+    path = Path(os.path.join(output_path,f"{func_name}_timeserie.csv"))
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as file:
         file.write("t_s,mem_mb\n")
         for t, m in zip(times_s, mems_mb):
             file.write(f"{t:.6f},{m:.6f}\n")
 
-    path = Path(os.path.join(output_path,f"{func_name}.png"))
+    path = Path(os.path.join(output_path,f"{func_name}_timeserie.png"))
     path.parent.mkdir(parents=True, exist_ok=True)
     plt.figure()
     plt.plot(times_s, mems_mb)
@@ -157,6 +160,7 @@ def benchmarking_analysis(
         delta_mem_mb=delta_mem_mb
     )
 
+    stats.to_json(os.path.join(output_path,f"{func_name}_stats.json"))
     return stats.asdict()
 
 if __name__ == "__main__":
@@ -164,20 +168,4 @@ if __name__ == "__main__":
     root.setLevel(os.environ.get("LOGLEVEL", "INFO"))
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] [%(asctime)s] %(message)s")
     args = get_params(sys.argv[1:])
-    function = importlib.import_module(name=args.function, package=args.package)
-    logging.info(
-        "Running %s from %s" % (args.function, args.package)
-    )
-
-    results = []
-    results.append(benchmarking_analysis(main))
-
-    filepath = os.path.join(args.path, "benchmark_results.txt")
-    with open(filepath, "w") as f:
-        for r in results:
-            f.write(f"results: {r['func']}\n")
-            f.write(f"Tiempo: {r['tiempo_seg']:.4f} s\n")
-            f.write(f"Memoria máxima: {r['memoria_max_MB']:.2f} MB\n")
-            f.write("-" * 30 + "\n")
-
-    logging.info("Saving results to %s" % filepath)
+    benchmarking_analysis(main, output_path=args.path)
