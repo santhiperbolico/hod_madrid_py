@@ -103,7 +103,7 @@ References: Avila et al. (2020); Reyes Pedraza (2024); HODfit2sim documentation.
 ===============================================================================
 """
 
-
+import os
 from pathlib import Path
 import src.hod as hod
 import src.hod_io as io
@@ -129,8 +129,8 @@ LBOX = 1000.0                           # Box size in Mpc/h
 # Input file parameters
 FTYPE = 'txt'                           # Possible input file type: txt
 OUTPUT_DIR = Path("output")
-INPUT_DIR = Path("data/example")
-INFILE = "/home2/guillermo/TFM_JOAQUIN/data/Halos_file_for_hod.txt"
+INPUT_DIR = Path("output/input_data")
+INFILE = os.path.join(INPUT_DIR, "Halos_file_for_hod.txt")
 
 
 # =============================================================================
@@ -159,12 +159,12 @@ CONFORMITY = True                       # If true, use global conformity paramet
 
 if HODFIT2SIM:
     # Output file from HODfit2sim
-    HOD_SHAPE_FILE = "/home2/guillermo/TFM_JOAQUIN/thesis/SAGE/h2s_output_shuffled.h5"  
+    HOD_SHAPE_FILE = os.path.join(INPUT_DIR, "h2s_output_shuffled.h5")
 else:
     # .txt file with Mmin Mmax Ncen Nsat in mass bins should be given
-    HOD_SHAPE_FILE = "/home2/guillermo/TFM_JOAQUIN/thesis/mock_from_SAGE/HOD_shape_file.txt"
+    HOD_SHAPE_FILE = os.path.join(INPUT_DIR, "HOD_shape_file.txt")
     # .txt file with K1_global K2_global should be given
-    CONFORMITY_FILE = "/home2/guillermo/TFM_JOAQUIN/thesis/mock_from_SAGE/CONFORMITY_file.txt"
+    CONFORMITY_FILE = os.path.join(INPUT_DIR, "CONFORMITY_file.txt")
 
 
 # =============================================================================
@@ -195,10 +195,10 @@ KAPPA_R = -2.1                           # Transition slope
 
 if HODFIT2SIM:
     # Output file from HODfit2sim
-    HOD_RP_FILE = "/home2/guillermo/TFM_JOAQUIN/thesis/SAGE/h2s_output_shuffled.h5"
+    HOD_RP_FILE = os.path.join(INPUT_DIR, "h2s_output_shuffled.h5")
 else:
     # .txt file with rmin rmax Nsat Nsat/sum(Nsat) in radius bins should be given
-    HOD_RP_FILE = "/home2/guillermo/TFM_JOAQUIN/thesis/mock_from_SAGE/HOD_rp_file.txt"
+    HOD_RP_FILE = os.path.join(INPUT_DIR, "HOD_rp_file.txt")
 
 
 # =============================================================================
@@ -245,10 +245,10 @@ DELTA_TAN = 1.3
 # If analytical_vp is False, a file should be given:
 if HODFIT2SIM:
     # Output file from HODfit2sim
-    HOD_VP_FILE = "/home2/guillermo/TFM_JOAQUIN/thesis/SAGE/h2s_output_shuffled.h5"
+    HOD_VP_FILE = os.path.join(INPUT_DIR, "h2s_output_shuffled.h5")
 else:
     # A .txt file with vr_min vr_max Nsat_vr vr_probs vtan_min vtan_max	Nsat_vtan vtan_probs should be given
-    HOD_VP_FILE = "/home2/guillermo/TFM_JOAQUIN/thesis/mock_from_SAGE/HOD_vp_file.txt"
+    HOD_VP_FILE = os.path.join(INPUT_DIR, "HOD_vp_file.txt")
 
 
 def main():

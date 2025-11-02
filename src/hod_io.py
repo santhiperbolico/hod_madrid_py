@@ -221,7 +221,7 @@ def validate_parameters(params):
 
 
 def line_separator():
-    width = min(os.get_terminal_size().columns, 80)
+    # width = min(os.get_terminal_size().columns, 80)
     separator = "=" * 60
     return separator
 
