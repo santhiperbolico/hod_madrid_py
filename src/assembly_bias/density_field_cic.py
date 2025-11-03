@@ -169,6 +169,38 @@ def density_field_cic_main(
     density = mass_field / (dx ** 3)
     return density, n_particles
 
+
+def save_density_field_cic(
+        density: np.ndarray,
+        dm_particles_file: str,
+        n_particles: int
+) -> str:
+    """
+    Saves a density field array to a file in binary format using the specified
+    filename and number of particles. The file name is formatted to include
+    the number of particles and adjusts for existing file extensions.
+
+    Parameters
+    ----------
+    density : numpy.ndarray
+        A NumPy array representing the density field to be saved.
+    dm_particles_file : str
+        The base name of the file that links to the density field.
+    n_particles : int
+        The number of particles to be included in the file naming structure.
+
+    Returns
+    -------
+    output_file: str
+        Outpu file name.
+    """
+    n_grid = density.shape[0]
+    dm_particles_file = dm_particles_file.split(".")[0]
+    output_file = "%s_density_np%i_ng%i.dat" % (
+        dm_particles_file.replace(".dat", ""), n_particles, n_grid)
+    density.tofile(output_file)
+    return output_file
+
 def load_density_field_cic(
     density_field_cic_file: str
 ) -> tuple[np.ndarray, int]:
@@ -193,10 +225,10 @@ def load_density_field_cic(
         - An integer indicating the number of particles extracted from the filename.
     """
     density = np.fromfile(density_field_cic_file)
-    if density_field_cic_file.endswith(".dat"):
-        density_field_cic_file = density_field_cic_file.replace(".dat", "")
-    n_particles =int(density_field_cic_file.split("_np")[-1].split("_")[0])        
-    return density, n_particles
+    density_field_cic_file = density_field_cic_file.split(".")[0]
+    n_particles =int(density_field_cic_file.split("_np")[-1].split("_")[0])
+    n_grid = int(density_field_cic_file.split("_ng")[-1].split("_")[0])
+    return density.reshape((n_grid, n_grid, n_grid)), n_particles
 
 def get_delta_density(
         density_field: np.ndarray,
@@ -253,8 +285,5 @@ if __name__=="__main__":
     end_time = time.time()
     duration = (end_time - start_time) / 60 # minutes
     logging.info("- Saving density field")
-    output_file = "%s_density_np%i.dat" % (dm_particles_file, n_particles)
-    if dm_particles_file.endswith(".dat"):
-        output_file = "%s_density_np%i.dat" % (dm_particles_file.replace(".dat", ""), n_particles)
-    density.tofile(output_file)
+    save_density_field_cic(density, dm_particles_file, n_particles)
     logging.info("- End Process: %f min." % duration )
